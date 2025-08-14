@@ -26,6 +26,9 @@
             transform: translateY(-10px);
             box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.2), 0 10px 10px -5px rgba(139, 92, 246, 0.1);
         }
+        .main-visualizer-card {
+            background: linear-gradient(45deg, #4f46e5, #a855f7);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white">
@@ -38,10 +41,16 @@
              <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
                 Sorting Algorithms
             </h1>
-            <a href="index.html" class="text-purple-400 hover:text-purple-300 transition-colors duration-300 font-semibold text-lg">
-                &larr; Back to Home
+            <a href="data-structures.html" class="text-purple-400 hover:text-purple-300 transition-colors duration-300 font-semibold text-lg">
+                &larr; Back to Categories
             </a>
         </header>
+
+        <!-- Main Visualizer Link -->
+        <a href="sorting.html" class="algo-card main-visualizer-card block p-8 rounded-xl mb-12 text-center">
+            <h2 class="text-3xl font-bold text-white mb-2">Interactive Sorting Visualizer</h2>
+            <p class="text-purple-200 text-lg">Visualize multiple sorting algorithms in one place. Input your own data, control the speed, and compare their performance.</p>
+        </a>
 
         <!-- Algorithm Grid -->
         <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -60,25 +69,25 @@
             <!-- Insertion Sort Card -->
             <a href="insertion-sort.html" class="algo-card block bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-purple-500">
                 <h2 class="text-2xl font-bold text-white mb-2">Insertion Sort</h2>
-                <p class="text-gray-400">A simple sorting algorithm that builds the final sorted array one item at a time. It is much less efficient on large lists than more advanced algorithms.</p>
+                <p class="text-gray-400">A simple sorting algorithm that builds the final sorted array one item at a time.</p>
             </a>
 
             <!-- Merge Sort Card -->
             <a href="merge-sort.html" class="algo-card block bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-purple-500">
                 <h2 class="text-2xl font-bold text-white mb-2">Merge Sort</h2>
-                <p class="text-gray-400">An efficient, stable, comparison-based sorting algorithm. Most implementations produce a stable sort, which means that the order of equal elements is the same in the input and output.</p>
+                <p class="text-gray-400">An efficient, stable, comparison-based sorting algorithm using a divide-and-conquer strategy.</p>
             </a>
 
             <!-- Quick Sort Card -->
             <a href="quick-sort.html" class="algo-card block bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-purple-500">
                 <h2 class="text-2xl font-bold text-white mb-2">Quick Sort</h2>
-                <p class="text-gray-400">An efficient sorting algorithm. When implemented well, it can be about two or three times faster than its main competitors, merge sort and heapsort.</p>
+                <p class="text-gray-400">An efficient sorting algorithm that uses a pivot element to partition the array.</p>
             </a>
             
             <!-- Heap Sort Card -->
             <a href="heap-sort.html" class="algo-card block bg-gray-800 p-8 rounded-xl border border-gray-700 hover:border-purple-500">
                 <h2 class="text-2xl font-bold text-white mb-2">Heap Sort</h2>
-                <p class="text-gray-400">A comparison-based sorting technique based on a Binary Heap data structure. It is similar to selection sort where we first find the maximum element and place it at the end.</p>
+                <p class="text-gray-400">A comparison-based sorting technique based on a Binary Heap data structure.</p>
             </a>
         </main>
     </div>
