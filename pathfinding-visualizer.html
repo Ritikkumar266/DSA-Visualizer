@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinding Visualizer - AlgoMotion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #grid-canvas {
+            background-color: #1f2937; /* gray-800 */
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+        .control-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
+            cursor: pointer;
+            background-color: #4b5563; /* gray-600 */
+        }
+        .control-btn:hover {
+            background-color: #6b7280; /* gray-500 */
+        }
+        .control-btn.active {
+            border-color: #8b5cf6; /* violet-500 */
+            background-color: #1f2937; /* gray-800 */
+        }
+        .action-btn {
+             background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        }
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-4">
+            <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+                Pathfinding Visualizer
+            </h1>
+            <a href="graphs.html" class="text-purple-400 hover:text-purple-300 transition-colors duration-300 font-semibold text-lg">
+                &larr; Back to Graphs
+            </a>
+        </header>
+        
+        <!-- Controls -->
+        <div class="flex flex-wrap gap-4 items-center bg-gray-800 p-4 rounded-lg mb-4">
+            <div>
+                <label for="algorithm-select" class="font-semibold mr-2">Algorithm:</label>
+                <select id="algorithm-select" class="bg-gray-700 text-white rounded-md p-2 border border-gray-600">
+                    <option value="dijkstra">Dijkstra's</option>
+                    <option value="a_star">A* Search</option>
+                    <option value="bfs">Breadth-First Search (BFS)</option>
+                    <option value="dfs">Depth-First Search (DFS)</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button class="control-btn active" id="draw-wall-btn">Draw Wall</button>
+                <button class="control-btn" id="draw-start-btn">Place Start</button>
+                <button class="control-btn" id="draw-end-btn">Place End</button>
+            </div>
+             <div class="flex-grow flex items-center gap-2">
+                <label for="speed-slider" class="font-semibold">Speed:</label>
+                <input type="range" id="speed-slider" min="1" max="100" value="80" class="w-full max-w-xs">
+            </div>
+            <div class="flex gap-2">
+                <button class="control-btn action-btn" id="visualize-btn" style="--tw-gradient-from: #16a34a; --tw-gradient-to: #22c55e;">Visualize</button>
+                <button class="control-btn" id="reset-btn" style="background-image: linear-gradient(to right, #dc2626, #ef4444);">Reset Grid</button>
+            </div>
+        </div>
+        
+        <div id="status-text" class="text-center text-lg font-semibold mb-4 h-6">Click 'Visualize' to start!</div>
+
+        <!-- Canvas -->
+        <canvas id="grid-canvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('grid-canvas');
+        const ctx = canvas.getContext('2d');
+        const visualizeBtn = document.getElementById('visualize-btn');
+        const statusText = document.getElementById('status-text');
+        const speedSlider = document.getElementById('speed-slider');
+        const algorithmSelect = document.getElementById('algorithm-select');
+
+        const gridSize = 25;
+        let cols, rows;
+        let grid = [];
+        let startNode = null;
+        let endNode = null;
+        
+        let currentDrawMode = 'wall'; // 'wall', 'start', 'end'
+        let isDrawing = false;
+        let isVisualizing = false;
+
+        // --- Node Class ---
+        class Node {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.isWall = false;
+                this.isStart = false;
+                this.isEnd = false;
+                // For pathfinding
+                this.g = Infinity; // Distance from start
+                this.h = 0;      // Heuristic distance to end
+                this.f = Infinity; // g + h
+                this.previous = null;
+                this.neighbors = [];
+            }
+
+            draw(color) {
+                ctx.fillStyle = color || '#374151'; // gray-700
+                if (this.isStart) ctx.fillStyle = '#16a34a'; // green-600
+                else if (this.isEnd) ctx.fillStyle = '#dc2626'; // red-600
+                else if (this.isWall) ctx.fillStyle = '#111827'; // gray-900
+                
+                ctx.fillRect(this.x * gridSize + 1, this.y * gridSize + 1, gridSize - 2, gridSize - 2);
+            }
+
+            addNeighbors() {
+                this.neighbors = [];
+                if (this.y > 0) this.neighbors.push(grid[this.y - 1][this.x]); // Up
+                if (this.x < cols - 1) this.neighbors.push(grid[this.y][this.x + 1]); // Right
+                if (this.y < rows - 1) this.neighbors.push(grid[this.y + 1][this.x]); // Down
+                if (this.x > 0) this.neighbors.push(grid[this.y][this.x - 1]); // Left
+            }
+        }
+
+        // --- Setup & Initialization ---
+        function setup() {
+            isVisualizing = false;
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            cols = Math.floor(canvas.width / gridSize);
+            canvas.height = Math.floor(cols * 0.6) * gridSize;
+            rows = Math.floor(canvas.height / gridSize);
+            
+            grid = [];
+            for (let y = 0; y < rows; y++) {
+                let row = [];
+                for (let x = 0; x < cols; x++) {
+                    row.push(new Node(x, y));
+                }
+                grid.push(row);
+            }
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    grid[y][x].addNeighbors();
+                }
+            }
+
+            startNode = grid[Math.floor(rows/2)][Math.floor(cols * 0.25)];
+            startNode.isStart = true;
+            endNode = grid[Math.floor(rows/2)][Math.floor(cols * 0.75)];
+            endNode.isEnd = true;
+            
+            visualizeBtn.disabled = false;
+            statusText.textContent = "Draw walls or press 'Visualize' to start!";
+            drawGrid();
+        }
+
+        function drawGrid(visitedSet = new Set(), path = []) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const node = grid[y][x];
+                    let color = '#374151';
+                    if (visitedSet.has(node)) color = '#4f46e5';
+                    if (path.includes(node)) color = '#facc15';
+                    node.draw(color);
+                }
+            }
+        }
+        
+        // --- Pathfinding Algorithms ---
+        function heuristic(a, b) { // Manhattan distance
+            return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        }
+
+        async function visualizePath(visitedNodes, path) {
+            const delay = 101 - speedSlider.value;
+            const visitedSet = new Set();
+            for (const node of visitedNodes) {
+                if (node === startNode || node === endNode) continue;
+                visitedSet.add(node);
+                drawGrid(visitedSet);
+                await new Promise(r => setTimeout(r, delay));
+            }
+
+            if (path) {
+                for (let i = 0; i <= path.length; i++) {
+                    drawGrid(visitedSet, path.slice(0, i));
+                    await new Promise(r => setTimeout(r, 50));
+                }
+                statusText.textContent = "Path Found!";
+            } else {
+                statusText.textContent = "No Path Found!";
+            }
+        }
+
+        function reconstructPath(endNode) {
+            let path = [];
+            let temp = endNode;
+            while (temp) {
+                path.push(temp);
+                temp = temp.previous;
+            }
+            return path.reverse();
+        }
+
+        function solve() {
+            const algorithm = algorithmSelect.value;
+            
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    const node = grid[y][x];
+                    node.g = Infinity;
+                    node.h = 0;
+                    node.f = Infinity;
+                    node.previous = null;
+                }
+            }
+
+            startNode.g = 0;
+            startNode.f = heuristic(startNode, endNode);
+            
+            const openSet = [startNode];
+            const visitedNodesInOrder = [];
+            
+            while (openSet.length > 0) {
+                let current;
+                if (algorithm === 'dijkstra' || algorithm === 'a_star') {
+                    openSet.sort((a, b) => a.f - b.f);
+                    current = openSet.shift();
+                } else if (algorithm === 'bfs') {
+                    current = openSet.shift(); // Queue
+                } else { // DFS
+                    current = openSet.pop(); // Stack
+                }
+
+                if (current.isWall) continue;
+                if (visitedNodesInOrder.includes(current)) continue;
+                
+                visitedNodesInOrder.push(current);
+
+                if (current === endNode) {
+                    return { visited: visitedNodesInOrder, path: reconstructPath(endNode) };
+                }
+
+                // For DFS, we want to explore neighbors in a consistent order (e.g., reverse)
+                const neighbors = algorithm === 'dfs' ? [...current.neighbors].reverse() : current.neighbors;
+
+                for (const neighbor of neighbors) {
+                    if (visitedNodesInOrder.includes(neighbor) || neighbor.isWall) {
+                        continue;
+                    }
+                    
+                    if (algorithm === 'dijkstra' || algorithm === 'a_star') {
+                         const tempG = current.g + 1;
+                         if (tempG < neighbor.g) {
+                            neighbor.previous = current;
+                            neighbor.g = tempG;
+                            if (algorithm === 'a_star') {
+                                neighbor.h = heuristic(neighbor, endNode);
+                            }
+                            neighbor.f = neighbor.g + neighbor.h;
+                            
+                            if (!openSet.includes(neighbor)) {
+                                openSet.push(neighbor);
+                            }
+                        }
+                    } else { // BFS and DFS logic
+                        // Only add to open set if it hasn't been queued up yet
+                        if (!openSet.includes(neighbor)) {
+                            neighbor.previous = current;
+                            openSet.push(neighbor);
+                        }
+                    }
+                }
+            }
+            return { visited: visitedNodesInOrder, path: null }; // No path found
+        }
+        
+        async function runVisualization() {
+            if (isVisualizing) return;
+            isVisualizing = true;
+            visualizeBtn.disabled = true;
+            statusText.textContent = `Visualizing with ${algorithmSelect.options[algorithmSelect.selectedIndex].text}...`;
+
+            const { visited, path } = solve();
+            await visualizePath(visited, path);
+
+            isVisualizing = false;
+            visualizeBtn.disabled = false;
+        }
+
+        visualizeBtn.addEventListener('click', runVisualization);
+
+        // --- UI Controls ---
+        const drawWallBtn = document.getElementById('draw-wall-btn');
+        const drawStartBtn = document.getElementById('draw-start-btn');
+        const drawEndBtn = document.getElementById('draw-end-btn');
+        
+        function setActiveButton(btn) {
+            [drawWallBtn, drawStartBtn, drawEndBtn].forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        drawWallBtn.addEventListener('click', () => { currentDrawMode = 'wall'; setActiveButton(drawWallBtn); });
+        drawStartBtn.addEventListener('click', () => { currentDrawMode = 'start'; setActiveButton(drawStartBtn); });
+        drawEndBtn.addEventListener('click', () => { currentDrawMode = 'end'; setActiveButton(drawEndBtn); });
+        
+        document.getElementById('reset-btn').addEventListener('click', setup);
+
+        // --- Canvas Drawing Handlers ---
+        function handleCanvasInteraction(e) {
+            if (isVisualizing) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const x = Math.floor(mouseX / gridSize);
+            const y = Math.floor(mouseY / gridSize);
+
+            if (x < 0 || x >= cols || y < 0 || y >= rows) return;
+            
+            const node = grid[y][x];
+
+            if (currentDrawMode === 'wall') {
+                if (!node.isStart && !node.isEnd) node.isWall = !node.isWall;
+            } else if (currentDrawMode === 'start') {
+                if (!node.isWall && !node.isEnd) {
+                    if (startNode) startNode.isStart = false;
+                    startNode = node;
+                    startNode.isStart = true;
+                }
+            } else if (currentDrawMode === 'end') {
+                 if (!node.isWall && !node.isStart) {
+                    if (endNode) endNode.isEnd = false;
+                    endNode = node;
+                    endNode.isEnd = true;
+                }
+            }
+            drawGrid();
+        }
+
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; handleCanvasInteraction(e); });
+        canvas.addEventListener('mouseup', () => { isDrawing = false; });
+        canvas.addEventListener('mousemove', (e) => { if (isDrawing && currentDrawMode === 'wall') handleCanvasInteraction(e); });
+        canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+
+        // --- Initial Call ---
+        window.onload = setup;
+        window.onresize = setup;
+
+    </script>
+</body>
+</html>

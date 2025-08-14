@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoMotion - Animate Your Algorithms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Prevents scrollbars from the canvas */
+        }
+        #background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <canvas id="background-animation"></canvas>
+
+    <div class="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
+        <div class="max-w-3xl">
+            <!-- Main Heading -->
+            <h1 class="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 leading-tight animate-fade-in-down">
+                Decode the Dance of Data.
+            </h1>
+
+            <!-- Subheading -->
+            <p class="mt-6 text-lg md:text-xl text-gray-300 max-w-2xl mx-auto animate-fade-in-up" style="animation-delay: 0.5s;">
+                Stop just reading about algorithms. See them. Interact with them. Master complex data structures and algorithms through stunning, step-by-step animations that bring code to life.
+            </p>
+
+            <!-- Call to Action Button -->
+            <div class="mt-10 animate-fade-in-up" style="animation-delay: 1s;">
+                <!-- **** THIS LINK NOW POINTS TO THE CATEGORY PAGE **** -->
+                <a href="data-structures.html" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-full text-lg transition-transform transform hover:scale-105 shadow-lg">
+                    Start Visualizing
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for the subtle background animation
+        const canvas = document.getElementById('background-animation');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        // Set canvas size to fill the window and handle resizing
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Particle class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = `rgba(139, 92, 246, ${Math.random() * 0.5 + 0.2})`; // Purple-ish color
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Reset particle if it goes off-screen
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Create particles
+        function initParticles() {
+            const particleCount = Math.floor((canvas.width * canvas.height) / 10000);
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize and start the animation
+        initParticles();
+        animate();
+
+        // Re-initialize particles on resize to adjust density
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            initParticles();
+        });
+
+        // Add keyframe animations for fade-in effect
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fade-in-down {
+                0% {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            @keyframes fade-in-up {
+                0% {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .animate-fade-in-down {
+                animation: fade-in-down 0.8s ease-out forwards;
+            }
+            .animate-fade-in-up {
+                animation: fade-in-up 0.8s ease-out forwards;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insertion Sort - AlgoMotion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .mono {
+            font-family: 'Fira Code', monospace;
+        }
+        #animation-canvas {
+            background-color: #1f2937; /* gray-800 */
+            border-radius: 0.5rem;
+        }
+        .code-block {
+            background-color: #111827; /* gray-900 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            overflow-x: auto;
+            color: #d1d5db; /* gray-300 */
+        }
+        .code-block .comment {
+            color: #6b7280; /* gray-500 */
+        }
+        .tab-btn.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+        }
+        .control-btn {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.2s ease-in-out;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateY(0);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #sort-btn { background-image: linear-gradient(to right, #16a34a, #22c55e); }
+        #pause-btn { background-image: linear-gradient(to right, #f59e0b, #facc15); }
+        #reset-btn { background-image: linear-gradient(to right, #dc2626, #ef4444); }
+        #backward-btn, #forward-btn { background-image: linear-gradient(to right, #3b82f6, #60a5fa); }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+                Insertion Sort
+            </h1>
+            <a href="sorting-algorithms.html" class="text-purple-400 hover:text-purple-300 transition-colors duration-300 font-semibold text-lg">
+                &larr; Back to Sorting Algorithms
+            </a>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Explanation -->
+            <div class="lg:col-span-1 space-y-6 text-gray-300">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-3">How It Works</h2>
+                    <p>Insertion Sort is a simple, intuitive sorting algorithm that builds the final sorted array one item at a time. It iterates through the input elements and, for each element, it "inserts" it into its correct position in the already-sorted part of the array.</p>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-3">Performance</h2>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong class="text-white">Worst-case time complexity:</strong> <span class="mono text-pink-400">O(n²)</span></li>
+                        <li><strong class="text-white">Average time complexity:</strong> <span class="mono text-pink-400">O(n²)</span></li>
+                        <li><strong class="text-white">Best-case time complexity:</strong> <span class="mono text-pink-400">O(n)</span></li>
+                        <li><strong class="text-white">Space complexity:</strong> <span class="mono text-pink-400">O(1)</span></li>
+                    </ul>
+                </div>
+                 <div>
+                    <h2 class="text-2xl font-bold text-white mb-3">Step-by-Step</h2>
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li>Start from the second element (element at index 1).</li>
+                        <li>This element is the "key". Compare the key with the elements before it (the sorted part).</li>
+                        <li>If a sorted element is greater than the key, shift it one position to the right.</li>
+                        <li>Repeat this shifting until you find an element smaller than or equal to the key, or you reach the beginning of the array.</li>
+                        <li>Insert the key in the correct position.</li>
+                        <li>Repeat for all other elements in the array.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Right Column: Visualization -->
+            <div class="lg:col-span-2">
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <canvas id="animation-canvas" width="800" height="400"></canvas>
+                </div>
+                <!-- Controls -->
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div class="space-y-2">
+                        <label for="array-input" class="font-semibold">Enter numbers (comma-separated):</label>
+                        <input type="text" id="array-input" class="w-full bg-gray-700 text-white rounded-md p-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500" value="12, 11, 13, 5, 6">
+                    </div>
+                    <div class="grid grid-cols-5 gap-2">
+                         <button id="sort-btn" class="control-btn">Sort</button>
+                         <button id="backward-btn" class="control-btn" disabled>&laquo; Back</button>
+                         <button id="pause-btn" class="control-btn" disabled>Pause</button>
+                         <button id="forward-btn" class="control-btn" disabled>Next &raquo;</button>
+                         <button id="reset-btn" class="control-btn">Reset</button>
+                    </div>
+                </div>
+                 <div class="mt-4">
+                    <label for="speed-slider" class="font-semibold">Speed:</label>
+                    <input type="range" id="speed-slider" min="1" max="100" value="50" class="w-full">
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Implementation Section -->
+        <div class="mt-12">
+            <h2 class="text-3xl font-bold text-center mb-6">Code Implementation</h2>
+            <div class="flex justify-center mb-4 border-b border-gray-700">
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-400 transition-colors active" data-lang="python">Python</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-400 transition-colors" data-lang="java">Java</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-400 transition-colors" data-lang="cpp">C++</button>
+                <button class="tab-btn py-2 px-4 font-semibold text-gray-400 transition-colors" data-lang="c">C</button>
+            </div>
+            <div id="code-container">
+                <!-- Python -->
+                <div id="code-python" class="code-block mono">
+<pre><code>def insertion_sort(arr):
+    <span class="comment"># Traverse through 1 to len(arr)</span>
+    for i in range(1, len(arr)):
+        key = arr[i]
+        <span class="comment"># Move elements of arr[0..i-1], that are
+        # greater than key, to one position ahead
+        # of their current position</span>
+        j = i-1
+        while j >= 0 and key < arr[j]:
+                arr[j+1] = arr[j]
+                j -= 1
+        arr[j+1] = key
+</code></pre>
+                </div>
+                <!-- Java -->
+                <div id="code-java" class="code-block mono hidden">
+<pre><code>class InsertionSort {
+    void sort(int arr[]) {
+        int n = arr.length;
+        for (int i = 1; i < n; ++i) {
+            int key = arr[i];
+            int j = i - 1;
+            <span class="comment">/* Move elements of arr[0..i-1], that are
+               greater than key, to one position ahead
+               of their current position */</span>
+            while (j >= 0 && arr[j] > key) {
+                arr[j + 1] = arr[j];
+                j = j - 1;
+            }
+            arr[j + 1] = key;
+        }
+    }
+}
+</code></pre>
+                </div>
+                <!-- C++ -->
+                <div id="code-cpp" class="code-block mono hidden">
+<pre><code>#include &lt;iostream&gt;
+using namespace std;
+
+void insertionSort(int arr[], int n) {
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        <span class="comment">// Move elements of arr[0..i-1] that are greater than key</span>
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}
+</code></pre>
+                </div>
+                <!-- C -->
+                <div id="code-c" class="code-block mono hidden">
+<pre><code>#include &lt;stdio.h&gt;
+
+void insertionSort(int arr[], int n) {
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        <span class="comment">/* Move elements of arr[0..i-1], that are
+           greater than key, to one position ahead
+           of their current position */</span>
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}
+</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM ELEMENTS ---
+        const canvas = document.getElementById('animation-canvas');
+        const ctx = canvas.getContext('2d');
+        const arrayInput = document.getElementById('array-input');
+        const sortBtn = document.getElementById('sort-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const speedSlider = document.getElementById('speed-slider');
+        const forwardBtn = document.getElementById('forward-btn');
+        const backwardBtn = document.getElementById('backward-btn');
+
+        // --- STATE MANAGEMENT ---
+        let animationQueue = [];
+        let currentStep = 0;
+        let isPaused = false;
+        let isSorting = false;
+        let animationFrameId;
+        const defaultColor = '#6366f1'; // indigo-500
+        const compareColor = '#f59e0b'; // amber-500
+        const keyColor = '#ec4899';    // pink-500
+        const sortedColor = '#22c55e';  // green-500
+
+        // --- INITIALIZATION ---
+        function initialize() {
+            const initialValue = arrayInput.value.trim();
+            let initialArray;
+            if (initialValue) {
+                initialArray = initialValue.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            } else {
+                initialArray = [];
+            }
+            animationQueue = [];
+            currentStep = 0;
+            isPaused = false;
+            isSorting = false;
+            sortBtn.disabled = false;
+            pauseBtn.disabled = true;
+            pauseBtn.textContent = 'Pause';
+            updateStepButtons();
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            generateInsertionSortQueue(initialArray);
+            executeStep(0);
+        }
+
+        // --- DRAWING LOGIC ---
+        function shadeColor(color, percent) {
+            let f = parseInt(color.slice(1), 16),
+                t = percent < 0 ? 0 : 255,
+                p = percent < 0 ? percent * -1 : percent,
+                R = f >> 16,
+                G = (f >> 8) & 0x00FF,
+                B = f & 0x0000FF;
+            return "#" + (0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 + (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
+        }
+
+        function drawRoundedRect(x, y, width, height, radius, color) {
+            const gradient = ctx.createLinearGradient(x, y, x, y + height);
+            gradient.addColorStop(0, shadeColor(color, 0.2));
+            gradient.addColorStop(1, shadeColor(color, -0.2));
+            ctx.fillStyle = gradient;
+
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.arcTo(x + width, y, x + width, y + radius, radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+            ctx.lineTo(x + radius, y + height);
+            ctx.arcTo(x, y + height, x, y + height - radius, radius);
+            ctx.lineTo(x, y + radius);
+            ctx.arcTo(x, y, x + radius, y, radius);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = shadeColor(color, 0.4);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        function drawArray(state) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '18px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(state.status, canvas.width / 2, 30);
+
+            const boxSize = 60;
+            const boxGap = 20;
+            const boxRadius = 10;
+            const totalWidth = (state.sorted.length + state.unsorted.length) * (boxSize + boxGap) - boxGap;
+            const startX = (canvas.width - totalWidth) / 2;
+            const startY = canvas.height / 2;
+            
+            // Draw Sorted Array
+            state.sorted.forEach((value, i) => {
+                const x = startX + i * (boxSize + boxGap);
+                let color = sortedColor;
+                let lift = 0;
+                if (i === state.compareIndex) {
+                    color = compareColor;
+                    lift = -60; // Lift the compared element
+                }
+                drawRoundedRect(x, startY + lift, boxSize, boxSize, boxRadius, color);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 24px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(value, x + boxSize / 2, startY + lift + boxSize / 2);
+            });
+
+            // Draw Divider
+            const dividerX = startX + state.sorted.length * (boxSize + boxGap) - boxGap / 2;
+            if (state.sorted.length > 0 && state.unsorted.length > 0) {
+                ctx.fillStyle = '#4b5563'; // gray-600
+                ctx.fillRect(dividerX, startY - 10, 2, boxSize + 20);
+            }
+
+            // Draw Unsorted Array
+            const unsortedStartX = startX + state.sorted.length * (boxSize + boxGap);
+            state.unsorted.forEach((value, i) => {
+                const x = unsortedStartX + i * (boxSize + boxGap);
+                let color = defaultColor;
+                let lift = 0;
+                if (i === 0) { // The key is always the first unsorted element
+                    color = keyColor;
+                    lift = -60;
+                }
+                drawRoundedRect(x, startY + lift, boxSize, boxSize, boxRadius, color);
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 24px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(value, x + boxSize / 2, startY + lift + boxSize / 2);
+            });
+
+            // Draw comparison symbol
+            if (state.symbol) {
+                const keyX = unsortedStartX;
+                const compareX = startX + state.compareIndex * (boxSize + boxGap);
+                const midX = (keyX + compareX + boxSize) / 2;
+                const symbolY = startY - 60 + boxSize/2;
+                
+                ctx.font = 'bold 30px Inter';
+                ctx.fillStyle = 'white';
+                ctx.fillText(state.symbol, midX, symbolY);
+            }
+        }
+
+        // --- ALGORITHM LOGIC ---
+        function generateInsertionSortQueue(initialArray) {
+            animationQueue = [];
+            let sorted = [];
+            let unsorted = [...initialArray];
+
+            const addState = (status, highlights = {}) => {
+                animationQueue.push({
+                    sorted: [...sorted],
+                    unsorted: [...unsorted],
+                    status: status,
+                    ...highlights
+                });
+            };
+            
+            addState("Initial array. Unsorted elements are on the right.");
+
+            if (unsorted.length > 0) {
+                sorted.push(unsorted.shift());
+                addState("Move the first element to the sorted partition.");
+            }
+
+            while (unsorted.length > 0) {
+                let key = unsorted[0];
+                addState(`Select ${key} from unsorted part as the key.`);
+                
+                let j = sorted.length - 1;
+                while (j >= 0) {
+                    const sortedEl = sorted[j];
+                    const symbol = key < sortedEl ? '<' : '>=';
+                    addState(`Comparing key ${key} with ${sortedEl}.`, { compareIndex: j, symbol: symbol });
+
+                    if (key < sortedEl) {
+                         addState(`Since ${key} < ${sortedEl}, we continue searching.`, { compareIndex: j, symbol: symbol });
+                         j--;
+                    } else {
+                         addState(`Since ${key} >= ${sortedEl}, we found the correct position.`, { compareIndex: j, symbol: symbol });
+                         break;
+                    }
+                }
+
+                if (j < 0) {
+                    addState(`Reached the beginning of the sorted part. Inserting key ${key}.`, {});
+                }
+
+                unsorted.shift();
+                sorted.splice(j + 1, 0, key);
+                addState(`Inserting ${key} into the sorted partition.`, {});
+            }
+            addState("Array is sorted!", {});
+        }
+        
+        // --- ANIMATION & STEP LOGIC ---
+        function executeStep(stepIndex) {
+            if (stepIndex < 0 || stepIndex >= animationQueue.length) return;
+            const state = animationQueue[stepIndex];
+            drawArray(state);
+        }
+
+        function animate() {
+            if (isPaused || currentStep >= animationQueue.length -1) {
+                isSorting = false;
+                sortBtn.disabled = false;
+                pauseBtn.disabled = true;
+                updateStepButtons();
+                executeStep(animationQueue.length - 1);
+                return;
+            }
+
+            executeStep(currentStep);
+            let delay = (151 - speedSlider.value) * 12;
+            currentStep++;
+            
+            setTimeout(() => {
+                animationFrameId = requestAnimationFrame(animate);
+            }, delay);
+        }
+
+        function manualStep(direction) {
+            if (!isPaused) return;
+            const newStep = currentStep + direction;
+            if (newStep < 0 || newStep >= animationQueue.length) return;
+            currentStep = newStep;
+            executeStep(currentStep);
+            updateStepButtons();
+        }
+
+        function updateStepButtons() {
+            if (isPaused) {
+                backwardBtn.disabled = currentStep <= 0;
+                forwardBtn.disabled = currentStep >= animationQueue.length - 1;
+            } else {
+                backwardBtn.disabled = true;
+                forwardBtn.disabled = true;
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        sortBtn.addEventListener('click', () => {
+            if (isSorting) return;
+            initialize();
+            if (animationQueue.length <= 1) return;
+            isSorting = true;
+            sortBtn.disabled = true;
+            pauseBtn.disabled = false;
+            animate();
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+            updateStepButtons();
+            if (!isPaused) {
+                animate();
+            }
+        });
+
+        resetBtn.addEventListener('click', initialize);
+        arrayInput.addEventListener('change', initialize);
+        forwardBtn.addEventListener('click', () => manualStep(1));
+        backwardBtn.addEventListener('click', () => manualStep(-1));
+
+        // --- CODE TABS ---
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const codeBlocks = document.querySelectorAll('.code-block');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const lang = button.dataset.lang;
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                codeBlocks.forEach(block => {
+                    if (block.id === `code-${lang}`) {
+                        block.classList.remove('hidden');
+                    } else {
+                        block.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // --- INITIAL CALL ---
+        window.onload = () => {
+            const container = document.querySelector('.lg\\:col-span-2');
+            if (container) {
+                canvas.width = container.clientWidth - 32;
+            }
+            initialize();
+        };
+        window.onresize = () => {
+             const container = document.querySelector('.lg\\:col-span-2');
+            if (container) {
+                canvas.width = container.clientWidth - 32;
+            }
+            initialize();
+        };
+    </script>
+</body>
+</html>
